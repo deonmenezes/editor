@@ -45,3 +45,7 @@ yarn-error.log*
 /.playwright-mcp
 og-test
 .env*.local
+
+# Pascal MCP user state
+scene.json
+*.glb

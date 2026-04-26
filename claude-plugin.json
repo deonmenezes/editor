@@ -1,0 +1,16 @@
+{
+  "name": "pascal-mcp",
+  "version": "0.1.0",
+  "description": "AI-native 3D building editor — control walls, doors, windows, and roofs through MCP tools, export to glTF.",
+  "homepage": "https://github.com/deonmenezes/editor",
+  "license": "MIT",
+  "mcpServers": {
+    "pascal": {
+      "command": "node",
+      "args": ["${PLUGIN_DIR}/packages/mcp/dist/index.js"],
+      "env": {
+        "PASCAL_SCENE_PATH": "${PLUGIN_DIR}/scene.json"
+      }
+    }
+  }
+}
