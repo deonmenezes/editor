@@ -32,6 +32,10 @@ out/
 build
 dist
 *.tsbuildinfo
+# Exception: the MCP plugin's dist/ ships in the repo so /plugin install
+# users get a runnable bundle without needing to build locally
+!packages/mcp/dist
+!packages/mcp/dist/**
 
 
 # Debug

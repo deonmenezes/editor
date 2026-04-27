@@ -13,18 +13,33 @@
 
 Open https://editor-six-indol.vercel.app — you're now in the world. Orbit / zoom with the mouse. The status panel in the top-left shows the relay state and how many peers are online with you. Whatever's there was built by someone with the Pascal Claude plugin installed.
 
-## Build in it (5 minutes)
+## Build in it
 
-You need [Claude Desktop](https://claude.ai/download) or [Claude Code](https://claude.com/claude-code), and Node 18+.
+### Option A — Claude Code, two slash commands (recommended)
+
+```
+/plugin marketplace add deonmenezes/editor
+/plugin install pascal-mcp@pascal-editor
+```
+
+Claude Code prompts you for the relay URL and room name (defaults work — just press enter). Restart and the `pascal` MCP server is live with the `pascal-build` skill auto-loaded. Now ask:
+
+> *"Build me a small house with two windows, then export it as a glb."*
+
+Watch it appear on the website in real time.
+
+### Option B — Manual install (Claude Desktop, or any MCP client)
+
+You need [Claude Desktop](https://claude.ai/download) and Node 18+.
 
 ```bash
 git clone https://github.com/deonmenezes/editor.git
 cd editor
-bun install            # or `npm install`
+bun install
 bun run build
 ```
 
-Then add this to `~/.claude.json` (or `claude_desktop_config.json`):
+Add this to `~/.claude.json` (Claude Code) or `claude_desktop_config.json` (Claude Desktop):
 
 ```json
 {
@@ -41,7 +56,7 @@ Then add this to `~/.claude.json` (or `claude_desktop_config.json`):
 }
 ```
 
-Restart Claude. Now ask:
+Restart Claude. Then ask:
 
 > *"Build me a small house with two windows, then export it as a glb."*
 
