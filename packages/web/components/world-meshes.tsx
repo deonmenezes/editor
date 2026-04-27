@@ -72,10 +72,36 @@ function Slab({ n }: { n: AnyNode }) {
   const d = n.depth ?? 6
   const t = (n as { thickness?: number }).thickness ?? 0.1
   const pos = n.position ?? [0, -t / 2, 0]
+  const preset = (n as { materialPreset?: string }).materialPreset
+  // Lightweight palette so pool water / grass / etc render distinctively
+  // without needing to ship the full material library.
+  let color = '#a8a8a8'
+  let roughness = 0.95
+  let metalness = 0
+  let opacity = 1
+  let transparent = false
+  if (preset === 'water') {
+    color = '#3aa9d4'
+    roughness = 0.15
+    metalness = 0.1
+    opacity = 0.85
+    transparent = true
+  } else if (preset === 'grass') {
+    color = '#5a8a3f'
+  } else if (preset === 'wood') {
+    color = '#8a6a3f'
+    roughness = 0.6
+  }
   return (
     <mesh position={[pos[0], pos[1], pos[2]]} receiveShadow>
       <boxGeometry args={[w, t, d]} />
-      <meshStandardMaterial color="#a8a8a8" roughness={0.95} />
+      <meshStandardMaterial
+        color={color}
+        roughness={roughness}
+        metalness={metalness}
+        transparent={transparent}
+        opacity={opacity}
+      />
     </mesh>
   )
 }
