@@ -3,7 +3,7 @@
 > A 3D building world that anyone can edit through Claude.
 > One world. CRDT-replicated. No central editor.
 
-🌐 **Live website**: https://editor-six-indol.vercel.app
+🌐 **Live website**: https://www.jogabysa.com
 🔌 **Live relay**: `wss://pascal-relay-deonmenezes.fly.dev`
 📦 **Repo**: https://github.com/deonmenezes/editor
 
@@ -11,7 +11,7 @@
 
 ## Try it (60 seconds)
 
-Open https://editor-six-indol.vercel.app — you're now in the world. Orbit / zoom with the mouse. The status panel in the top-left shows the relay state and how many peers are online with you. Whatever's there was built by someone with the Pascal Claude plugin installed.
+Open https://www.jogabysa.com — you're now in the world. Orbit / zoom with the mouse. The status panel in the top-left shows the relay state and how many peers are online with you. Whatever's there was built by someone with the Pascal Claude plugin installed.
 
 ## Build in it
 

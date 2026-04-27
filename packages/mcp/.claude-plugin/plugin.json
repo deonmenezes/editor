@@ -1,7 +1,7 @@
 {
   "name": "pascal-mcp",
   "version": "0.4.0",
-  "description": "Build a shared 3D world through Claude. CRDT-synced; what you build appears live at https://editor-six-indol.vercel.app for everyone, instantly.",
+  "description": "Build a shared 3D world through Claude. CRDT-synced; what you build appears live at https://www.jogabysa.com for everyone, instantly.",
   "author": {
     "name": "Deon Menezes",
     "url": "https://github.com/deonmenezes"

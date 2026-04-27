@@ -6,7 +6,7 @@ Three paths, depending on what you want to do.
 
 ## Path 1 — I just want to look around (60 seconds)
 
-Open https://editor-six-indol.vercel.app
+Open https://www.jogabysa.com
 
 That's it. Drag to orbit, scroll to zoom. The status panel at the top-left shows whether the live relay is connected and how many other peers are in the room with you.
 
@@ -64,7 +64,7 @@ Open a new conversation and try:
 
 > "Build me a small house, then add a window on the east wall and export it as a glb."
 
-You should see Claude call `house_build`, then `window_add`, then `scene_export_glb`. While it works, refresh https://editor-six-indol.vercel.app — the house appears in the browser within a second.
+You should see Claude call `house_build`, then `window_add`, then `scene_export_glb`. While it works, refresh https://www.jogabysa.com — the house appears in the browser within a second.
 
 ### Drop in the agent skill (optional but recommended)
 

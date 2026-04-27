@@ -5,7 +5,7 @@
     "url": "https://github.com/deonmenezes"
   },
   "metadata": {
-    "description": "Pascal — a CRDT-backed shared 3D building world. Edit through Claude; everyone sees it live at https://editor-six-indol.vercel.app",
+    "description": "Pascal — a CRDT-backed shared 3D building world. Edit through Claude; everyone sees it live at https://www.jogabysa.com",
     "version": "0.3.0"
   },
   "plugins": [

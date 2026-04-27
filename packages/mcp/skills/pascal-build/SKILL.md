@@ -14,7 +14,7 @@ description: |
 You have access to the Pascal MCP server. It edits a shared 3D building
 world as a CRDT (Y.js). When you call a tool, the change syncs to every
 other connected peer — including the live website at
-https://editor-six-indol.vercel.app — within a second.
+https://www.jogabysa.com — within a second.
 
 ## Coordinate system (this trips people up)
 
