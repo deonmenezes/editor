@@ -49,3 +49,6 @@ og-test
 # Pascal MCP user state
 scene.json
 *.glb
+
+# OMC session state
+.omc/

@@ -40,5 +40,13 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
 
 await store.loadFromDisk()
 
+const relayUrl = process.env.PASCAL_RELAY_URL
+const room = process.env.PASCAL_ROOM ?? 'pascal-world'
+if (relayUrl) {
+  store.startSync(relayUrl, room)
+  // Allow a brief window to receive the remote doc state before serving tool calls
+  await store.awaitSyncReady(3500)
+}
+
 const transport = new StdioServerTransport()
 await server.connect(transport)

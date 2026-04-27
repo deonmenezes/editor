@@ -1,7 +1,7 @@
 {
   "name": "pascal-mcp",
-  "version": "0.1.0",
-  "description": "AI-native 3D building editor — control walls, doors, windows, and roofs through MCP tools, export to glTF.",
+  "version": "0.2.0",
+  "description": "AI-native 3D building editor — edits a shared world via CRDT (Y.js). Set PASCAL_RELAY_URL to join the global swarm; leave unset to build solo.",
   "homepage": "https://github.com/deonmenezes/editor",
   "license": "MIT",
   "mcpServers": {
@@ -9,7 +9,9 @@
       "command": "node",
       "args": ["${PLUGIN_DIR}/packages/mcp/dist/index.js"],
       "env": {
-        "PASCAL_SCENE_PATH": "${PLUGIN_DIR}/scene.json"
+        "PASCAL_SCENE_PATH": "${PLUGIN_DIR}/scene.json",
+        "PASCAL_RELAY_URL": "",
+        "PASCAL_ROOM": "pascal-world"
       }
     }
   }

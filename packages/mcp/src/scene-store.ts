@@ -1,8 +1,11 @@
 import { existsSync } from 'node:fs'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import type { z } from 'zod'
 import * as core from '@pascal-app/core'
+import WebSocket from 'ws'
+import { WebsocketProvider } from 'y-websocket'
+import * as Y from 'yjs'
+import type { z } from 'zod'
 
 type AnyNode = z.infer<typeof core.AnyNode>
 
@@ -11,8 +14,16 @@ export type SceneData = {
   rootNodeIds: string[]
 }
 
-let state: SceneData = { nodes: {}, rootNodeIds: [] }
+const doc = new Y.Doc()
+const yNodes = doc.getMap<AnyNode>('nodes')
+const yMeta = doc.getMap<unknown>('meta')
+
 let scenePath: string = path.resolve(process.env.PASCAL_SCENE_PATH ?? './scene.json')
+let provider: WebsocketProvider | null = null
+
+export function getDoc(): Y.Doc {
+  return doc
+}
 
 export function getScenePath(): string {
   return scenePath
@@ -22,89 +33,186 @@ export function setScenePath(p: string): void {
   scenePath = path.resolve(p)
 }
 
+function getRootIds(): string[] {
+  return (yMeta.get('rootNodeIds') as string[] | undefined) ?? []
+}
+
 export function getState(): SceneData {
-  return state
+  return {
+    nodes: Object.fromEntries(yNodes.entries()),
+    rootNodeIds: getRootIds(),
+  }
 }
 
 export function initDefault(): void {
-  // Note: SiteNode.children expects building/item *objects* (not ids), per the
-  // upstream schema. BuildingNode.children expects level *ids* (strings).
+  // SiteNode.children expects building/item *objects* (not ids). BuildingNode
+  // expects level *ids*.
   const level = core.LevelNode.parse({ level: 0 })
   const building = core.BuildingNode.parse({ children: [level.id] })
   const site = core.SiteNode.parse({ children: [building] })
   level.parentId = building.id
   building.parentId = site.id
-  state = {
-    nodes: {
-      [site.id]: site as AnyNode,
-      [building.id]: building as AnyNode,
-      [level.id]: level as AnyNode,
-    },
-    rootNodeIds: [site.id],
-  }
+  doc.transact(() => {
+    yNodes.clear()
+    yNodes.set(site.id, site as AnyNode)
+    yNodes.set(building.id, building as AnyNode)
+    yNodes.set(level.id, level as AnyNode)
+    yMeta.set('rootNodeIds', [site.id])
+  })
 }
 
 export function clear(): void {
   initDefault()
 }
 
+function applySnapshot(snapshot: SceneData): void {
+  doc.transact(() => {
+    yNodes.clear()
+    for (const [id, node] of Object.entries(snapshot.nodes)) {
+      yNodes.set(id, node)
+    }
+    yMeta.set('rootNodeIds', snapshot.rootNodeIds ?? [])
+  })
+}
+
 export async function loadFromDisk(p?: string): Promise<SceneData> {
   if (p) setScenePath(p)
   if (!existsSync(scenePath)) {
-    initDefault()
+    if (yNodes.size === 0) initDefault()
     await saveToDisk()
-    return state
+    return getState()
   }
   const json = await fs.readFile(scenePath, 'utf-8')
-  state = JSON.parse(json) as SceneData
-  return state
+  const parsed = JSON.parse(json) as SceneData
+  applySnapshot(parsed)
+  return getState()
 }
 
 export async function saveToDisk(p?: string): Promise<string> {
   if (p) setScenePath(p)
   await fs.mkdir(path.dirname(scenePath), { recursive: true })
-  await fs.writeFile(scenePath, JSON.stringify(state, null, 2))
+  await fs.writeFile(scenePath, JSON.stringify(getState(), null, 2))
   return scenePath
 }
 
 export function addNode(node: AnyNode): void {
-  state.nodes[node.id] = node
-  if (node.parentId && state.nodes[node.parentId]) {
-    const parent = state.nodes[node.parentId] as AnyNode & { children?: string[] }
-    if (Array.isArray(parent.children) && !parent.children.includes(node.id)) {
-      parent.children.push(node.id)
+  doc.transact(() => {
+    yNodes.set(node.id, node)
+    if (node.parentId) {
+      const parent = yNodes.get(node.parentId)
+      if (parent && Array.isArray((parent as AnyNode & { children?: unknown[] }).children)) {
+        const parentChildren = (parent as AnyNode & { children: unknown[] }).children
+        // Children may be string ids (level/building) or objects (site).
+        const alreadyPresent = parentChildren.some((c) =>
+          typeof c === 'string' ? c === node.id : (c as { id?: string }).id === node.id,
+        )
+        if (!alreadyPresent) {
+          const updatedParent = {
+            ...(parent as AnyNode & { children: unknown[] }),
+            children: [...parentChildren, node.id],
+          }
+          yNodes.set(node.parentId, updatedParent as AnyNode)
+        }
+      }
     }
-  }
+  })
 }
 
 export function deleteNodes(ids: string[]): number {
   let removed = 0
-  for (const id of ids) {
-    const n = state.nodes[id]
-    if (!n) continue
-    if (n.parentId && state.nodes[n.parentId]) {
-      const parent = state.nodes[n.parentId] as AnyNode & { children?: string[] }
-      if (Array.isArray(parent.children)) {
-        parent.children = parent.children.filter((c: string) => c !== id)
+  doc.transact(() => {
+    const todo = [...ids]
+    while (todo.length > 0) {
+      const id = todo.shift()
+      if (!id) continue
+      const n = yNodes.get(id)
+      if (!n) continue
+      // detach from parent
+      if (n.parentId) {
+        const parent = yNodes.get(n.parentId)
+        if (parent && Array.isArray((parent as AnyNode & { children?: unknown[] }).children)) {
+          const parentChildren = (parent as AnyNode & { children: unknown[] }).children
+          const filtered = parentChildren.filter((c) =>
+            typeof c === 'string' ? c !== id : (c as { id?: string }).id !== id,
+          )
+          const updatedParent = {
+            ...(parent as AnyNode & { children: unknown[] }),
+            children: filtered,
+          }
+          yNodes.set(n.parentId, updatedParent as AnyNode)
+        }
       }
+      // queue descendants
+      const children = (n as AnyNode & { children?: unknown[] }).children
+      if (Array.isArray(children)) {
+        for (const c of children) {
+          const childId = typeof c === 'string' ? c : (c as { id?: string }).id
+          if (childId) todo.push(childId)
+        }
+      }
+      yNodes.delete(id)
+      removed++
     }
-    const node = n as AnyNode & { children?: string[] }
-    if (Array.isArray(node.children)) {
-      removed += deleteNodes([...node.children])
-    }
-    delete state.nodes[id]
-    removed++
-  }
+  })
   return removed
 }
 
 export function getLevelId(): string | null {
-  for (const n of Object.values(state.nodes)) {
+  for (const n of yNodes.values()) {
     if (n.type === 'level') return n.id
   }
   return null
 }
 
 export function getNode(id: string): AnyNode | undefined {
-  return state.nodes[id]
+  return yNodes.get(id)
+}
+
+export type SyncStatus = {
+  enabled: boolean
+  url?: string
+  room?: string
+  connected?: boolean
+}
+
+export function startSync(url: string, room: string): SyncStatus {
+  if (provider) provider.destroy()
+  provider = new WebsocketProvider(url, room, doc, {
+    WebSocketPolyfill: WebSocket as unknown as typeof globalThis.WebSocket,
+    connect: true,
+  })
+  return { enabled: true, url, room, connected: provider.wsconnected }
+}
+
+export function stopSync(): void {
+  if (provider) {
+    provider.destroy()
+    provider = null
+  }
+}
+
+export function getSyncStatus(): SyncStatus {
+  if (!provider) return { enabled: false }
+  return {
+    enabled: true,
+    url: provider.url,
+    room: provider.roomname,
+    connected: provider.wsconnected,
+  }
+}
+
+export async function awaitSyncReady(timeoutMs = 4000): Promise<boolean> {
+  if (!provider) return false
+  if (provider.wsconnected && provider.synced) return true
+  return await new Promise<boolean>((resolve) => {
+    const timer = setTimeout(() => resolve(false), timeoutMs)
+    const onSync = (synced: boolean) => {
+      if (synced) {
+        clearTimeout(timer)
+        provider?.off('sync', onSync)
+        resolve(true)
+      }
+    }
+    provider?.on('sync', onSync)
+  })
 }

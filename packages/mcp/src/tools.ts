@@ -67,6 +67,13 @@ reg({
 })
 
 reg({
+  name: 'world_status',
+  description: 'Show whether this MCP is connected to a shared relay (multiplayer) and which room. Set PASCAL_RELAY_URL and PASCAL_ROOM to enable.',
+  inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+  handler: async () => store.getSyncStatus(),
+})
+
+reg({
   name: 'scene_clear',
   description: 'Wipe the scene and re-initialize a fresh Site → Building → Level hierarchy.',
   inputSchema: { type: 'object', properties: {}, additionalProperties: false },
