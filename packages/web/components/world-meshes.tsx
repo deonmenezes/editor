@@ -44,6 +44,20 @@ export function WorldMeshes() {
   )
 }
 
+function WallMaterial({ preset }: { preset?: string }) {
+  let color = '#f0ede5'
+  let roughness = 0.85
+  let metalness = 0
+  if (preset === 'marble') { color = '#f5f3ee'; roughness = 0.2; metalness = 0.05 }
+  else if (preset === 'black-marble') { color = '#1a1a1f'; roughness = 0.18; metalness = 0.1 }
+  else if (preset === 'gold') { color = '#d4af37'; roughness = 0.25; metalness = 0.85 }
+  else if (preset === 'velvet') { color = '#6a1f2a'; roughness = 0.95 }
+  else if (preset === 'crimson') { color = '#a01828'; roughness = 0.8 }
+  else if (preset === 'wood') { color = '#8a6a3f'; roughness = 0.6 }
+  else if (preset === 'sandstone') { color = '#d6b87a'; roughness = 0.9 }
+  return <meshStandardMaterial color={color} roughness={roughness} metalness={metalness} />
+}
+
 function Wall({ n }: { n: AnyNode }) {
   if (!n.start || !n.end) return null
   const [x1, z1] = n.start
@@ -62,7 +76,7 @@ function Wall({ n }: { n: AnyNode }) {
   return (
     <mesh position={[cx, cy, cz]} rotation={[0, angleY, 0]} castShadow receiveShadow>
       <boxGeometry args={[length, height, thickness]} />
-      <meshStandardMaterial color="#f0ede5" roughness={0.85} />
+      <WallMaterial preset={(n as { materialPreset?: string }).materialPreset} />
     </mesh>
   )
 }
@@ -91,6 +105,27 @@ function Slab({ n }: { n: AnyNode }) {
   } else if (preset === 'wood') {
     color = '#8a6a3f'
     roughness = 0.6
+  } else if (preset === 'marble') {
+    color = '#f5f3ee'
+    roughness = 0.18
+    metalness = 0.05
+  } else if (preset === 'black-marble') {
+    color = '#1a1a1f'
+    roughness = 0.15
+    metalness = 0.1
+  } else if (preset === 'gold') {
+    color = '#d4af37'
+    roughness = 0.25
+    metalness = 0.85
+  } else if (preset === 'velvet') {
+    color = '#6a1f2a'
+    roughness = 0.95
+  } else if (preset === 'crimson') {
+    color = '#a01828'
+    roughness = 0.8
+  } else if (preset === 'silk') {
+    color = '#e8d8b8'
+    roughness = 0.4
   }
   return (
     <mesh position={[pos[0], pos[1], pos[2]]} receiveShadow>
