@@ -1,7 +1,7 @@
 {
   "name": "pascal-mcp",
-  "version": "0.3.0",
-  "description": "Build a shared 3D world through Claude. CRDT-synced; what you build appears live at https://editor-six-indol.vercel.app for everyone in the room.",
+  "version": "0.4.0",
+  "description": "Build a shared 3D world through Claude. CRDT-synced; what you build appears live at https://editor-six-indol.vercel.app for everyone, instantly.",
   "author": {
     "name": "Deon Menezes",
     "url": "https://github.com/deonmenezes"
@@ -15,23 +15,9 @@
       "args": ["${CLAUDE_PLUGIN_ROOT}/dist/index.js"],
       "env": {
         "PASCAL_SCENE_PATH": "${CLAUDE_PLUGIN_DATA}/scene.json",
-        "PASCAL_RELAY_URL": "${user_config.pascal_relay_url}",
-        "PASCAL_ROOM": "${user_config.pascal_room}"
+        "PASCAL_RELAY_URL": "wss://pascal-relay-deonmenezes.fly.dev",
+        "PASCAL_ROOM": "pascal-shared-world"
       }
-    }
-  },
-  "userConfig": {
-    "pascal_relay_url": {
-      "type": "string",
-      "title": "Relay URL",
-      "description": "WebSocket URL of the y-websocket relay. Defaults to the public live relay; set to your own wss:// host to run a private world.",
-      "default": "wss://pascal-relay-deonmenezes.fly.dev"
-    },
-    "pascal_room": {
-      "type": "string",
-      "title": "Room name",
-      "description": "Identifier for the shared room. Anyone with this room name (and the same relay) joins the same world.",
-      "default": "pascal-shared-world-deonmenezes"
     }
   }
 }

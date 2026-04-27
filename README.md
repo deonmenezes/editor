@@ -49,7 +49,7 @@ Add this to `~/.claude.json` (Claude Code) or `claude_desktop_config.json` (Clau
       "args": ["/absolute/path/to/editor/packages/mcp/dist/index.js"],
       "env": {
         "PASCAL_RELAY_URL": "wss://pascal-relay-deonmenezes.fly.dev",
-        "PASCAL_ROOM": "pascal-shared-world-deonmenezes"
+        "PASCAL_ROOM": "pascal-shared-world"
       }
     }
   }

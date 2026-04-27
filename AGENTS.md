@@ -27,7 +27,7 @@ tooling/
 
 - **Web**: https://editor-six-indol.vercel.app (Vercel)
 - **Relay**: `wss://pascal-relay-deonmenezes.fly.dev` (Fly.io, single machine)
-- **Default room**: `pascal-shared-world-deonmenezes`
+- **Default room**: `pascal-shared-world`
 
 ## Build commands
 

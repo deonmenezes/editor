@@ -47,7 +47,7 @@ In your Claude config — `~/.claude.json` for Claude Code, or
       "args": ["/absolute/path/to/editor/packages/mcp/dist/index.js"],
       "env": {
         "PASCAL_RELAY_URL": "wss://pascal-relay-deonmenezes.fly.dev",
-        "PASCAL_ROOM": "pascal-shared-world-deonmenezes"
+        "PASCAL_ROOM": "pascal-shared-world"
       }
     }
   }
