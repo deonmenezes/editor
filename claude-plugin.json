@@ -1,17 +1,18 @@
 {
   "name": "pascal-mcp",
-  "version": "0.2.0",
-  "description": "AI-native 3D building editor — edits a shared world via CRDT (Y.js). Set PASCAL_RELAY_URL to join the global swarm; leave unset to build solo.",
+  "version": "0.3.0",
+  "description": "Build 3D worlds collaboratively through Claude. CRDT-synced; what you build appears live at https://editor-six-indol.vercel.app for everyone in the room.",
   "homepage": "https://github.com/deonmenezes/editor",
   "license": "MIT",
+  "skills": ["${PLUGIN_DIR}/.claude/skills/pascal-build.md"],
   "mcpServers": {
     "pascal": {
       "command": "node",
       "args": ["${PLUGIN_DIR}/packages/mcp/dist/index.js"],
       "env": {
         "PASCAL_SCENE_PATH": "${PLUGIN_DIR}/scene.json",
-        "PASCAL_RELAY_URL": "",
-        "PASCAL_ROOM": "pascal-world"
+        "PASCAL_RELAY_URL": "wss://pascal-relay-deonmenezes.fly.dev",
+        "PASCAL_ROOM": "pascal-shared-world-deonmenezes"
       }
     }
   }

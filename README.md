@@ -1,131 +1,116 @@
 # Pascal — shared world
 
-A 3D building world that anyone can edit through Claude. One world, millions of potential builders, no central server holds the truth — state lives in a CRDT replicated across every connected peer.
+> A 3D building world that anyone can edit through Claude.
+> One world. CRDT-replicated. No central editor.
 
-## Architecture
+🌐 **Live website**: https://editor-six-indol.vercel.app
+🔌 **Live relay**: `wss://pascal-relay-deonmenezes.fly.dev`
+📦 **Repo**: https://github.com/deonmenezes/editor
 
-```
-   ┌─────────────────────────────────────────────────────────┐
-   │  Vercel-hosted website (packages/web)                   │
-   │  Next.js + React Three Fiber                            │
-   │  Loads the world live, renders walls/roofs/slabs       │
-   └────────────────────────────┬────────────────────────────┘
-                                │ y-websocket
-                                ▼
-   ┌─────────────────────────────────────────────────────────┐
-   │  Relay (packages/relay)                                 │
-   │  Stateless WebSocket router for CRDT messages           │
-   │  Holds NO app state — every peer carries the doc        │
-   │  Deploy to Fly.io / Railway / a tiny VM                 │
-   └────────────────────────────▲────────────────────────────┘
-                                │ y-websocket
-   ┌────────────────────────────┴────────────────────────────┐
-   │  Claude plugin (packages/mcp)                           │
-   │  Each user's machine. Tools: wall_add, door_add, …     │
-   │  Edits go straight into a shared Y.Doc                  │
-   └─────────────────────────────────────────────────────────┘
-```
+---
 
-**The relay is the only centralized piece.** It just routes encrypted CRDT messages between peers; turn it off and the doc still lives in everyone's local Y.Doc. Anyone can run their own relay.
+## Try it (60 seconds)
 
-## Layout
+Open https://editor-six-indol.vercel.app — you're now in the world. Orbit / zoom with the mouse. The status panel in the top-left shows the relay state and how many peers are online with you. Whatever's there was built by someone with the Pascal Claude plugin installed.
 
-```
-packages/
-├── core/      Zod schemas for nodes (wall, door, window, roof, …)
-├── mcp/       Claude plugin. MCP stdio server backed by a Y.Doc
-├── relay/     Tiny y-websocket relay. Stateless. Deploy anywhere.
-└── web/       Next.js viewer. Joins the same Y.Doc swarm and renders 3D.
-```
+## Build in it (5 minutes)
 
-## Run locally (full stack)
+You need [Claude Desktop](https://claude.ai/download) or [Claude Code](https://claude.com/claude-code), and Node 18+.
 
 ```bash
-bun install
+git clone https://github.com/deonmenezes/editor.git
+cd editor
+bun install            # or `npm install`
 bun run build
-
-# Terminal 1 — relay
-node packages/relay/dist/index.js
-# → pascal-relay listening on ws://0.0.0.0:1234
-
-# Terminal 2 — viewer (open http://localhost:3000)
-NEXT_PUBLIC_PASCAL_RELAY_URL=ws://localhost:1234 \
-NEXT_PUBLIC_PASCAL_ROOM=pascal-world \
-  bun run --cwd packages/web dev
-
-# Terminal 3 — Claude (or any MCP client) drives edits
-PASCAL_RELAY_URL=ws://localhost:1234 \
-PASCAL_ROOM=pascal-world \
-  node packages/mcp/dist/index.js
 ```
 
-When you build a wall through Claude in terminal 3, it shows up in the browser in terminal 2 within ~50ms.
-
-## Wire to Claude
+Then add this to `~/.claude.json` (or `claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
     "pascal": {
       "command": "node",
-      "args": ["C:/Users/YOU/editor/packages/mcp/dist/index.js"],
+      "args": ["/absolute/path/to/editor/packages/mcp/dist/index.js"],
       "env": {
-        "PASCAL_RELAY_URL": "wss://your-relay.example.com",
-        "PASCAL_ROOM": "pascal-world"
+        "PASCAL_RELAY_URL": "wss://pascal-relay-deonmenezes.fly.dev",
+        "PASCAL_ROOM": "pascal-shared-world-deonmenezes"
       }
     }
   }
 }
 ```
 
-Without `PASCAL_RELAY_URL` the plugin works fine offline — your edits live in your own Y.Doc and persist to `scene.json`.
+Restart Claude. Now ask:
+
+> *"Build me a small house with two windows, then export it as a glb."*
+
+Watch it happen on the website in real time.
+
+If you want, drop the agent-facing skill at [`.claude/skills/pascal-build.md`](./.claude/skills/pascal-build.md) into your own Claude config — it teaches the model how to use these tools well.
+
+## Host your own (20 minutes)
+
+Step-by-step in [ONBOARDING.md](./ONBOARDING.md). Short version: deploy `packages/relay` to Fly.io (or any host with WebSocket support), deploy `packages/web` to Vercel, point the web's env at your relay, point your Claude plugin at it too.
+
+---
+
+## Architecture
+
+```
+   ┌──────────────────────────────────────────────────────┐
+   │  Vercel-hosted website (packages/web)                │
+   │  Next.js + React Three Fiber                         │
+   │  Loads the world live, renders walls/roofs/slabs     │
+   └────────────────────────────┬─────────────────────────┘
+                                │ y-websocket
+                                ▼
+   ┌──────────────────────────────────────────────────────┐
+   │  Relay (packages/relay) — on Fly.io                  │
+   │  Stateless WebSocket router for CRDT messages        │
+   │  Holds NO app state — every peer carries the doc     │
+   └────────────────────────────▲─────────────────────────┘
+                                │ y-websocket
+   ┌────────────────────────────┴─────────────────────────┐
+   │  Claude plugin (packages/mcp)                        │
+   │  Each user's machine. Tools: wall_add, door_add, …   │
+   │  Edits go straight into a shared Y.Doc               │
+   └──────────────────────────────────────────────────────┘
+```
+
+The relay is the only centralized piece. It just routes encrypted CRDT messages between peers; turn it off and the doc still lives in everyone's local Y.Doc. **Anyone can run their own relay**, and the doc happily syncs to it.
+
+## Layout
+
+| Package | Role |
+|---------|------|
+| `packages/core` | Zod schemas for nodes (wall, door, window, roof, …) — pure data |
+| `packages/mcp` | Claude plugin. MCP stdio server backed by a Y.Doc |
+| `packages/relay` | y-websocket relay. Stateless. Deploy anywhere |
+| `packages/web` | Next.js + R3F viewer. Joins the swarm and renders 3D |
 
 ## MCP tools
 
 | Tool | Purpose |
 |------|---------|
 | `world_status` | Connection state to the relay |
-| `scene_summary` | Text tree of the current world |
-| `scene_clear` | Wipe and reset the shared scene to defaults |
-| `wall_add` | Add a wall (`start`, `end` in floor-plan [x, z]) |
+| `scene_summary` | Text tree of the current world (the model's "vision") |
+| `scene_clear` | Wipe the shared scene back to defaults |
+| `wall_add` | Add a wall — `start` and `end` are `[x, z]` floor coordinates |
 | `door_add` / `window_add` | Add openings to a wall |
-| `roof_add` | Single-segment roof |
+| `roof_add` | Single-segment roof on the level |
 | `node_delete` | Delete nodes (cascades to descendants) |
-| `house_build` | One-shot helper: rectangle + door + windows + gable roof |
-| `scene_export_glb` | Snapshot to a `.glb` you can open in Blender |
+| `house_build` | One-shot: rectangle + door + windows + gable roof |
+| `scene_export_glb` | Export to a `.glb` you can open in Blender / model-viewer / VS Code |
 | `scene_save` / `scene_load` | Local snapshot of the doc to JSON |
 
-## Deploying
+Coordinate system: `[x, z]` on the floor plan, in metres. `y=0` is the floor; positive `y` is up. glTF output is right-handed Y-up.
 
-### Relay
+## Limits called out honestly
 
-Any host with WebSocket support works. Examples:
-
-```bash
-# Fly.io
-cd packages/relay
-fly launch --no-deploy
-fly deploy
-
-# Railway / Render — point at packages/relay, run `npm start`
-# DigitalOcean / Hetzner / a Pi at home — run `node dist/index.js`
-```
-
-The relay is stateless and tiny (~1 KB bundle); a $5 VM can comfortably host hundreds of concurrent peers.
-
-### Website
-
-```bash
-cd packages/web
-vercel
-# Set env: NEXT_PUBLIC_PASCAL_RELAY_URL, NEXT_PUBLIC_PASCAL_ROOM
-```
-
-## Limits to be honest about
-
-- WebRTC mesh isn't on yet — sync goes through the relay. At a few hundred concurrent peers the relay starts to be a bottleneck. Fix: turn on `y-webrtc` for browser peers (mesh among browsers, MCPs still relay) — a few hours of work.
-- *Anyone can edit* means anyone can also delete everything. Y.js gives full edit history; a "moderator undo" UI on the website is the planned mitigation.
-- IPFS snapshot persistence (so the world survives the relay GC'ing the doc) is staged for the next pass — currently the world lives in the relay's memory while at least one peer is connected.
+- **WebRTC mesh isn't on yet.** Sync currently goes through the relay. The single shared-cpu Fly machine handles a few hundred concurrent peers comfortably; beyond that, mesh + sticky-session sharding is the next pass.
+- **Anyone can edit anything.** Y.js gives full edit history for free; a moderator-undo button on the website is a planned mitigation.
+- **No persistence beyond the relay's memory yet.** If everyone disconnects and the relay restarts, the world is lost. IPFS snapshots are queued for the next phase — the world's Y-update binary blob would be pinned periodically and re-applied on relay boot.
 
 ## License
 
